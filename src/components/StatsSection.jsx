@@ -17,7 +17,10 @@ const StatsSection = () => {
           </div>
           <div className="md:w-1/2 grid grid-cols-1 md:grid-cols-3 gap-6">
             {stats.map((stat, index) => (
-              <div key={index} className="stat-card">
+              <div 
+                key={index} 
+                className="stat-card hover:scale-105 hover:shadow-xl transition-all duration-300 p-6 bg-white rounded-lg text-center"
+              >
                 <img 
                   src={stat.icon} 
                   alt={stat.label} 

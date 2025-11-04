@@ -19,6 +19,7 @@ import LaboratoryParuPage from './pages/LaboratoryParuPage';
 import LaboratoryUrinePage from './pages/LaboratoryUrinePage';
 import LaboratoryHatiPage from './pages/LaboratoryHatiPage';
 import ChatDokterPage from './pages/ChatDokterPage';
+import Berita from './pages/berita';
 
 function App() {
   const location = useLocation();
@@ -55,6 +56,7 @@ function App() {
         <Route path="/laboratorium/urine" element={<LaboratoryUrinePage />} />
         <Route path="/laboratorium/hati" element={<LaboratoryHatiPage />} />
         <Route path="/ChatDokterPage" element={<ChatDokterPage />} />
+        <Route path="/berita" element={<berita />} />
       </Routes>
     </div>
   );
