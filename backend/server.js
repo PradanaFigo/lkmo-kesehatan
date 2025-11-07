@@ -12,10 +12,12 @@ const Chat = require('./models/Chat');
 // Routes & Middleware
 const authRoutes = require('./routes/auth.routes');
 const chatRoutes = require('./routes/chat.routes');
+const queueRoutes = require('./routes/queue.routes');
 const authenticateToken = require('./middleware/auth.middleware');
 
 // Socket.IO
 const socketIo = require('socket.io');
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
@@ -23,8 +25,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: ["http://localhost:3000", "http://localhost:5173"],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -36,7 +39,21 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/chats', authenticateToken, chatRoutes);
+// Add debug middleware
+app.use((req, res, next) => {
+  console.log('Request Headers:', req.headers);
+  next();
+});
+
+app.use('/api/chats', authenticateToken, (req, res, next) => {
+  console.log('After Auth - User:', req.user);
+  next();
+}, chatRoutes);
+
+app.use('/api/queue', authenticateToken, (req, res, next) => {
+  console.log('After Auth - Queue User:', req.user);
+  next();
+}, queueRoutes);
 
 // Contoh route proteksi
 app.get('/api/me', authenticateToken, async (req, res) => {
@@ -49,13 +66,29 @@ app.get('/api/me', authenticateToken, async (req, res) => {
   }
 });
 
+// Socket.IO Authentication Middleware
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    return next(new Error('Authentication token required'));
+  }
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    socket.user = payload;
+    next();
+  } catch (err) {
+    next(new Error('Invalid token'));
+  }
+});
+
 // Socket.IO Connection Handler
 io.on('connection', (socket) => {
-  console.log('✅ User connected:', socket.id);
+  console.log('✅ User connected:', socket.id, 'User:', socket.user);
 
   // Join room berdasarkan user ID
   socket.on('join', (userId) => {
-    socket.join(userId);
+    socket.join(userId.toString());
     console.log(`📥 User ${userId} joined room`);
   });
 
@@ -69,21 +102,30 @@ io.on('connection', (socket) => {
     }
 
     try {
-      // Simpan ke database
-      const savedMessage = await Chat.create({ sender_id: from, receiver_id: to, message });
+      // Simpan ke database dengan status 'waiting'
+      const savedMessage = await Chat.create({ 
+        sender_id: from.toString(), 
+        receiver_id: to.toString(), 
+        message,
+        status: 'waiting'
+      });
       console.log('💾 Pesan disimpan ke database:', savedMessage.id);
+
+      // Kirim ke penerima via Socket.IO
+      io.to(to.toString()).emit('receiveMessage', {
+        from: from.toString(),
+        message,
+        timestamp: new Date().toISOString(),
+        status: 'waiting'
+      });
+
+      console.log(`📨 Pesan dari ${from} ke ${to}:`, message);
+      
+      // Broadcast ke semua client bahwa ada update di daftar chat
+      io.emit('chatListUpdate');
     } catch (err) {
       console.error('❌ Gagal simpan chat ke database:', err);
     }
-
-    // Kirim ke penerima via Socket.IO
-    io.to(to).emit('receiveMessage', {
-      from,
-      message,
-      timestamp: new Date().toISOString()
-    });
-
-    console.log(`📨 Pesan dari ${from} ke ${to}:`, message);
   });
 
   socket.on('disconnect', () => {

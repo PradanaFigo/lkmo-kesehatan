@@ -4,7 +4,7 @@ const StatsSection = () => {
   const stats = [
     { icon: "/users-icon.png", number: "600+", label: "Pengguna" },
     { icon: "/doctor-icon.png", number: "350+", label: "Dokter" },
-    { icon: "/pharmacy-icon.png", number: "400+", label: "Mitra Apotek" }
+    { icon: "/pharmacy-icon.png", number: "400+", label: "Mitra Pengguna" }
   ];
 
   return (

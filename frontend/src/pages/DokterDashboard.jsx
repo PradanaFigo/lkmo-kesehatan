@@ -1,47 +1,83 @@
-import React from 'react';
-import Footer from '../components/Footer';
+import React, { useState, useEffect } from 'react';
+import DoctorHeader from '../components/DoctorHeader';
 import DoctorChatList from '../components/DoctorChatList';
 
 const DokterDashboard = () => {
   const user = JSON.parse(localStorage.getItem('user'));
+  const [stats, setStats] = useState({
+    waiting: 0,
+    ongoing: 0,
+    total: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/chats/stats', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+    
+    fetchStats();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#f8fafc]">
+      <DoctorHeader />
 
-      <main className="flex-grow container-medilink max-w-6xl mx-auto p-6">
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h1 className="text-2xl font-bold text-[#003366] mb-2">Selamat Datang, Dr. {user.full_name}!</h1>
-          <p className="text-gray-600">Dashboard untuk dokter Medilink</p>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500">Menunggu Konsultasi</p>
+                <h3 className="text-2xl font-bold text-[#003366]">{stats.waiting}</h3>
+              </div>
+              <div className="bg-blue-100 p-3 rounded-full">
+                🕒
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500">Konsultasi Aktif</p>
+                <h3 className="text-2xl font-bold text-[#003366]">{stats.ongoing}</h3>
+              </div>
+              <div className="bg-green-100 p-3 rounded-full">
+                💬
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500">Total Pasien</p>
+                <h3 className="text-2xl font-bold text-[#003366]">{stats.total}</h3>
+              </div>
+              <div className="bg-purple-100 p-3 rounded-full">
+                👥
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Card 1: Daftar Pasien */}
-          <div className="bg-[#e6f0ff] rounded-xl p-6">
-            <h3 className="text-xl font-bold text-[#003366] mb-2">Pasien Hari Ini</h3>
-            <p className="text-gray-600">12 pasien menunggu konsultasi</p>
-          </div>
-
-          {/* Card 2: Jadwal Praktik */}
-          <div className="bg-[#e6f0ff] rounded-xl p-6">
-            <h3 className="text-xl font-bold text-[#003366] mb-2">Jadwal Praktik</h3>
-            <p className="text-gray-600">Senin-Jumat: 08.00 - 16.00</p>
-          </div>
-
-          {/* Card 3: Artikel Kesehatan */}
-          <div className="bg-[#e6f0ff] rounded-xl p-6">
-            <h3 className="text-xl font-bold text-[#003366] mb-2">Tulis Artikel</h3>
-            <p className="text-gray-600">Bagikan pengetahuan kesehatan Anda</p>
-          </div>
-
-          {/* Card 4: Profil */}
-          <div className="bg-[#e6f0ff] rounded-xl p-6">
-            <h3 className="text-xl font-bold text-[#003366] mb-2">Profil Saya</h3>
-            <p className="text-gray-600">Kelola informasi pribadi Anda</p>
-          </div>
-        </div>
+        {/* Chat List */}
         <DoctorChatList doctorId={user.id} />
       </main>
-      <Footer />
     </div>
   );
 };

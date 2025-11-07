@@ -3,13 +3,14 @@ const pool = require('../config/db');
 
 class User {
   static async create(userData) {
-    const { username, email, password_hash, full_name, gender, age } = userData;
+    // default role uses Indonesian label to match DB constraint
+    const { username, email, password_hash, full_name, gender, age, role = 'pasien' } = userData;
     const query = `
-      INSERT INTO users (username, email, password_hash, full_name, gender, age)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, username, email, full_name, gender, age, created_at
+      INSERT INTO users (username, email, password_hash, full_name, gender, age, role)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id, username, email, full_name, gender, age, role, created_at
     `;
-    const values = [username, email, password_hash, full_name, gender, age];
+    const values = [username, email, password_hash, full_name, gender, age, role];
     const result = await pool.query(query, values);
     return result.rows[0];
   }

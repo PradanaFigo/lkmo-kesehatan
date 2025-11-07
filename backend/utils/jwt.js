@@ -2,10 +2,15 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-please-change';
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️ WARNING: JWT_SECRET not set in environment. Using fallback development secret. Do NOT use this in production.');
+}
+
 const generateToken = (user) => {
   return jwt.sign(
     { id: user.id, username: user.username },
-    process.env.JWT_SECRET,
+    JWT_SECRET,
     { expiresIn: '7d' }
   );
 };

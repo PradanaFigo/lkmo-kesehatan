@@ -6,6 +6,7 @@ import StatsSection from './components/StatsSection';
 import HeartRiskCalculator from './components/HeartRiskCalculator';
 import HealthyLifestyle from './components/HealthyLifestyle';
 import StorySection from './components/StorySection';
+import ArticlePage from './pages/ArticlePage';
 import Footer from './components/Footer';
 import LaboratoryPage from './pages/LaboratoryPage';
 import LoginPage from './pages/LoginPage';
@@ -22,17 +23,18 @@ import ChatDokterPage from './pages/ChatDokterPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminPage from './pages/AdminPage';
 import DokterDashboard from './pages/DokterDashboard';
+import DoctorChatRoom from './pages/DoctorChatRoom';
 //import PasienDashboard from './pages/PasienDashboard';
 //import ChatPasienPage from './pages/ChatPasienPage';
 import ChatRoom from './pages/ChatRoom';
 
 function App() {
   const location = useLocation();
-  const hideHeader = ['/masuk', '/daftar', '/hasil-risiko-jantung'].includes(location.pathname)
+  const hideHeader = ['/masuk', '/login', '/daftar', '/register', '/hasil-risiko-jantung'].includes(location.pathname)
 
   return (
     <div className="App">
-      {!hideHeader && <Header />}
+      {!hideHeader && location.pathname !== '/dashboard' && <Header />}
       <Routes>
         <Route 
           path="/" 
@@ -51,7 +53,9 @@ function App() {
         />
         <Route path="/laboratorium" element={<LaboratoryPage />} />
         <Route path="/masuk" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/daftar" element={<RegisterPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/hasil-risiko-jantung" element={<HeartRiskResultPage />} />
         <Route path="/laboratorium/bayi" element={<LaboratoryBayiPage />} />
         <Route path="/laboratorium/darah" element={<LaboratoryDarahPage />} />
@@ -61,7 +65,7 @@ function App() {
         <Route path="/laboratorium/urine" element={<LaboratoryUrinePage />} />
         <Route path="/laboratorium/hati" element={<LaboratoryHatiPage />} />
         <Route path="/chat" element={<ChatDokterPage />} />
-        <Route path="/berita" element={<berita />} />
+  <Route path="/berita/:slug" element={<ArticlePage />} />
         {/* <Route path="/chat-pasien" element={<ChatPasienPage />} /> */}
         <Route path="/hasil-risiko-jantung" element={
         <ProtectedRoute>
@@ -84,8 +88,22 @@ function App() {
               </ProtectedRoute>
             } 
         />
-        <Route path="/chat-room" element={<ChatRoom />} />
-        <Route path="/chat-room/:patientId" element={<ChatRoom />} />
+        <Route 
+          path="/chat-room" 
+          element={
+            <ProtectedRoute>
+              <ChatRoom />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/chat-room/:patientId" 
+          element={
+            <ProtectedRoute>
+              <DoctorChatRoom />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </div>
   );

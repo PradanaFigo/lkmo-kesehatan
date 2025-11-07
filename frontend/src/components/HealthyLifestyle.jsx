@@ -45,7 +45,6 @@ const HealthyLifestyle = () => {
               <div className={`font-medium ${index === 3 ? 'text-[#FFD700]' : 'text-[#003366]'}`}>{tip.title}</div>
               {index === 3 && (
                 <div className="mt-4 text-sm text-[#f3f3f4] cursor-pointer hover:underline">
-                  Klik disini untuk mulai chat dokter →
                 </div>
               )}
             </div>

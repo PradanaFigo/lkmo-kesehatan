@@ -3,19 +3,91 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:5000');
+const socket = io('http://localhost:5000', {
+  auth: {
+    token: localStorage.getItem('token')
+  },
+  autoConnect: false,
+  transports: ['websocket', 'polling']
+});
 
 const ChatRoom = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
-  const doctorId = 'dokter_1'; // Ganti dengan ID dokter dinamis jika perlu
+  const [doctorId, setDoctorId] = useState(null);
+  // Fetch chat history
+  const fetchChatHistory = React.useCallback(async (userId, doctorId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/chats/history/${userId}/${doctorId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const history = await response.json();
+        setMessages(history.map(msg => ({
+          from: msg.sender_id,
+          message: msg.message,
+          timestamp: new Date(msg.created_at)
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+    }
+  }, []);
+
+  // Fetch available doctor or use assigned doctor
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/auth/doctors', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (response.ok) {
+          const doctors = await response.json();
+          if (doctors.length > 0) {
+            const docId = doctors[0].id.toString();
+            setDoctorId(docId);
+            // Fetch chat history once we have both user and doctor IDs
+            if (user?.id) {
+              await fetchChatHistory(user.id, docId);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching doctor:', error);
+      }
+    };
+    if (user?.id) {
+      fetchDoctor();
+    }
+  }, [user?.id, fetchChatHistory]);
 
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
 
+
   useEffect(() => {
-    // Join room berdasarkan user ID
-    socket.emit('join', user.id);
+    if (!user?.id) {
+      console.error('No user ID available');
+      return;
+    }
+
+    // Connect to socket
+    socket.connect();
+
+    // Socket event handlers
+    socket.on('connect', () => {
+      console.log('Socket connected');
+      // Join room after successful connection
+      socket.emit('join', user.id);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+    });
 
     // Terima pesan
     socket.on('receiveMessage', (data) => {
@@ -26,26 +98,29 @@ const ChatRoom = () => {
       }]);
     });
 
-    // Kirim pesan selamat datang otomatis
-    const welcomeMessage = {
-      from: doctorId,
-      to: user.id,
-      message: `Halo! ${user.full_name}, saya disini untuk membantu anda, tolong jelaskan kondisi anda saat ini.`
-    };
-
-    setTimeout(() => {
-      socket.emit('sendMessage', welcomeMessage);
-      setMessages(prev => [...prev, {
+    // Kirim pesan selamat datang otomatis jika ada doctorId
+    if (doctorId && user?.full_name) {
+      const welcomeMessage = {
         from: doctorId,
-        message: welcomeMessage.message,
-        timestamp: new Date()
-      }]);
-    }, 1000);
+        to: user.id,
+        message: `Halo! ${user.full_name}, saya disini untuk membantu anda, tolong jelaskan kondisi anda saat ini.`
+      };
+
+      setTimeout(() => {
+        socket.emit('sendMessage', welcomeMessage);
+        setMessages(prev => [...prev, {
+          from: doctorId,
+          message: welcomeMessage.message,
+          timestamp: new Date()
+        }]);
+      }, 1000);
+    }
 
     return () => {
       socket.off('receiveMessage');
+      socket.disconnect();
     };
-  }, [user.id, doctorId]);
+  }, [user?.id, user?.full_name, doctorId]);
 
   const sendMessage = () => {
     if (!message.trim()) return;
@@ -67,7 +142,8 @@ const ChatRoom = () => {
     setMessage('');
   };
 
-  const completeConsultation = () => {
+  // Fungsi untuk menyelesaikan konsultasi dan kembali ke dashboard
+  const handleCompleteConsultation = () => {
     alert('Konsultasi selesai!');
     navigate('/dashboard'); // kembali ke dashboard
   };
@@ -75,19 +151,27 @@ const ChatRoom = () => {
   return (
     <div className="min-h-screen bg-[#e6f0ff] p-4">
       {/* Header */}
-      <div className="bg-[#003366] text-white p-4 flex items-center space-x-3">
-        <button onClick={() => navigate(-1)} className="text-white">
-          ←
-        </button>
-        <img 
-          src="/doctor-icon.png" 
-          alt="Dokter"
-          className="w-10 h-10 rounded-full"
-        />
-        <div>
-          <div className="font-bold">Dokter</div>
-          <div className="text-sm">MediLink Hospital</div>
+      <div className="bg-[#003366] text-white p-4 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <button onClick={() => navigate(-1)} className="text-white">
+            ←
+          </button>
+          <img 
+            src="/doctor-icon.png" 
+            alt="Dokter"
+            className="w-10 h-10 rounded-full"
+          />
+          <div>
+            <div className="font-bold">Dokter</div>
+            <div className="text-sm">MediLink Hospital</div>
+          </div>
         </div>
+        <button
+          onClick={handleCompleteConsultation}
+          className="bg-white text-[#003366] px-3 py-1 rounded font-semibold"
+        >
+          Selesai
+        </button>
       </div>
 
       {/* Area Chat */}

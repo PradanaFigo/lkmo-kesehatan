@@ -54,3 +54,89 @@ body {
   padding-left: 1rem;
   padding-right: 1rem;
 }
+
+/* Highlight animation used when scrolling to the calculator */
+#kalkulator-kesehtan.highlight {
+  animation: highlight-pulse 2s ease-in-out forwards;
+}
+
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255,216,77,0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 18px rgba(255,216,77,0.0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255,216,77,0.0);
+  }
+}
+
+/* Healthy lifestyle section styling (matches provided design) */
+.healthy-strip {
+  background: linear-gradient(180deg, #eef6fb 0%, #d8e6ef 45%, #c9d9e6 100%);
+  border-top: 8px solid rgba(0,51,102,0.06);
+}
+
+.healthy-inner {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.healthy-item .icon-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 18px rgba(10, 25, 47, 0.08);
+}
+
+.healthy-item img {
+  width: 48px;
+  height: 48px;
+}
+
+.healthy-feature-large {
+  width: 220px;
+  height: 220px;
+  background-color: #003366;
+  border-radius: 9999px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16px 30px rgba(0, 24, 51, 0.18);
+  padding: 1rem;
+}
+
+.healthy-feature-large .feature-icon {
+  background-color: #003366; /* same as wrapper so icon appears inside the circle */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.healthy-feature-large img {
+  /* tint the png icon to yellow-ish using filter; this may vary per asset */
+  filter: invert(77%) sepia(86%) saturate(740%) hue-rotate(2deg) brightness(1) contrast(0.95);
+}
+
+@media (max-width: 768px) {
+  .healthy-feature-large {
+    width: 160px;
+    height: 160px;
+  }
+
+  .healthy-item .icon-circle {
+    width: 64px;
+    height: 64px;
+  }
+
+  .healthy-item img {
+    width: 40px;
+    height: 40px;
+  }
+}

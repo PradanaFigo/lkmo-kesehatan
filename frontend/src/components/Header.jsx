@@ -1,9 +1,10 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const Header = () => {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -22,9 +23,31 @@ const Header = () => {
           <nav>
             <ul className="flex space-x-6">
               <li>
-                <Link to="/" className="hover:underline">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const scrollToCalculator = () => {
+                      const el = document.getElementById('kalkulator-kesehtan');
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        el.classList.add('highlight');
+                        // remove highlight after animation
+                        setTimeout(() => el.classList.remove('highlight'), 2200);
+                      }
+                    };
+
+                    if (location.pathname === '/') {
+                      scrollToCalculator();
+                    } else {
+                      navigate('/');
+                      // wait for navigation to render
+                      setTimeout(scrollToCalculator, 400);
+                    }
+                  }}
+                  className="hover:underline text-left"
+                >
                   Kalkulator Kesehatan
-                </Link>
+                </button>
               </li>
               <li>
                 <Link to="/chat" className="hover:underline"> {/* ✅ Perbaiki route */}
